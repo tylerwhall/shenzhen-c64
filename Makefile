@@ -2,13 +2,13 @@ export CC65_HOME = /usr/share/cc65
 CC65_TARGET = c64
 
 
-SOURCES = test.o kernal.o
+SOURCES = test.o rom.o
 PROGRAM = test
 
 ifdef CC65_TARGET
 CC      = cl65
-ASFLAGS = -t $(CC65_TARGET)
-CFLAGS  = -t $(CC65_TARGET) --create-dep $(<:.c=.d) -Oirs -g -l $(PROGRAM).lst
+ASFLAGS = -t $(CC65_TARGET) -l $(<).lst
+CFLAGS  = -t $(CC65_TARGET) --create-dep $(<:.c=.d) -Oirs -g -l $(<).lst
 LDFLAGS = -t $(CC65_TARGET) -m $(PROGRAM).map -vm -Ln $(PROGRAM).lbl
 else
 CC      = gcc
