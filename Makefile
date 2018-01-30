@@ -45,4 +45,4 @@ dis: $(PROGRAM)
 	da65 $(PROGRAM)
 
 run: $(PROGRAM)
-	x64 -moncommands cmds.txt test
+	x64 -moncommands cmds.txt -controlport2device 1 -joydev2 1 test

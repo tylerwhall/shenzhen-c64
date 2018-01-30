@@ -6,15 +6,21 @@
 
 #define BANK_REG (*(volatile char *)0x01)
 
-extern char SCREENMEM[1000];
+struct screen_memory {
+    char mem[1000];
+    char pad[16];
+    char sprite_ptr[8];
+};
+
+extern struct screen_memory SCREENMEM;
 extern char CHARMEM[256 * 8];
 
-#if 0
-#define get_screen_addr() ((char *)SCREENMEM)
+#if 1
+#define get_screen_mem() (&SCREENMEM)
 #else
-static char *get_screen_addr(void)
+static struct screen_memory *get_screen_mem(void)
 {
-    return (char *)((VIC.addr & 0xf0) << (2 + 8 - 4));
+    return (struct screen_memory *)((VIC.addr & 0xf0) << (2 + 8 - 4));
 }
 #endif
 
@@ -62,7 +68,7 @@ static void copy_character_rom(void)
 
 void clear_screen(void)
 {
-    char *addr = get_screen_addr();
+    char *addr = &get_screen_mem()->mem[0];
 
 #if 0
     /* Display all the characters */
@@ -107,7 +113,7 @@ extern char CARD_RIGHT;
 
 static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
 {
-    char *char_addr = get_screen_addr();
+    char *char_addr = &get_screen_mem()->mem[0];
     register uint16_t offset = x + y * 40;
     int i;
 
@@ -155,16 +161,92 @@ static void cards(void)
 #undef STEP
 }
 
+extern char SPRITE_PTR_CARD;
+
+static void sprite_setup(void)
+{
+    get_screen_mem()->sprite_ptr[0] = &SPRITE_PTR_CARD;
+    VIC.spr_hi_x = 0;
+    VIC.spr0_x = 100;
+    VIC.spr0_y = 100;
+    VIC.spr_ena = 1; // Enable sprite 1
+    VIC.spr0_color = COLOR_BLACK;
+}
+
+#define RASTER_MIN      51
+#define RASTER_MAX      (RASTER_MIN + SCREEN_HEIGHT * 8)
+
+#define SPRITE_XOFFSET  24
+#define SPRITE_YOFFSET  (29 + 21)
+
+#define SPRITE_XMIN (SPRITE_XOFFSET)
+#define SPRITE_XMAX (SPRITE_XOFFSET + (SCREEN_WIDTH * 8) - 2) /* Leave a couple extra pixels so it's still visible */
+#define SPRITE_YMIN (SPRITE_YOFFSET)
+#define SPRITE_YMAX (SPRITE_YOFFSET + (SCREEN_HEIGHT * 8) - 2) /* Leave a couple extra pixels so it's still visible */
+
+#define JOY_UP      (1 << 0)
+#define JOY_DOWN    (1 << 1)
+#define JOY_LEFT    (1 << 2)
+#define JOY_RIGHT   (1 << 3)
+
+#define JOY_SPEED 4
+
+static uint16_t posx;
+static uint8_t posy;
+
+static void joy2_process(void)
+{
+    uint8_t joyval = ~CIA1.pra;
+
+    while (VIC.rasterline < RASTER_MAX);
+
+    if (joyval & JOY_UP) {
+        posy -= JOY_SPEED;
+    }
+    if (joyval & JOY_DOWN) {
+        posy += JOY_SPEED;
+    }
+    if (posy > SPRITE_YMAX) {
+        posy = SPRITE_YMAX;
+    }
+    if (posy < SPRITE_YMIN) {
+        posy = SPRITE_YMIN;
+    }
+    if (joyval & JOY_LEFT) {
+        posx -= JOY_SPEED;
+    }
+    if (joyval & JOY_RIGHT) {
+        posx += JOY_SPEED;
+    }
+    if (posx > SPRITE_XMAX) {
+        posx = SPRITE_XMAX;
+    }
+    if (posx < SPRITE_XMIN) {
+        posx = SPRITE_XMIN;
+    }
+    VIC.spr0_x = (uint8_t)posx;
+    VIC.spr_hi_x &= ~1;
+    VIC.spr_hi_x |= posx >> 8;
+    VIC.spr0_y = (uint8_t)posy;
+
+    while (VIC.rasterline > RASTER_MAX);
+}
+
 int main(void)
 {
     printf("Hello world port: 0x%x\n", *(unsigned char *)(0x01));
-    printf("Screen at 0x%x\n", get_screen_addr());
+    printf("Screen at 0x%x\n", (uint16_t)get_screen_mem());
+#if 1
+    sprite_setup();
     copy_character_rom();
     set_screen_addr();
     clear_screen();
     cards();
+#endif
     //printf("Screenreg 0x %x\n", (char)&SCREENREG);
     //printf("Press return to exit");
+    while (1)
+        joy2_process();
     while (cbm_k_getin() != '1');
 
     restore_screen_addr();

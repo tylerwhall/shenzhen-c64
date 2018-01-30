@@ -38,13 +38,17 @@ CARD_LEFT:
     .byte   $80, $80, $80, $80, $80, $80, $80, $80
     ; solid
     .byte   $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-    .align    256 * 8
+    .align  256 * 8
 
-    .export _SCREENMEM
-_SCREENMEM:
-    .res  1024
-    .rodata
     .export _SCREENREG = (_SCREENMEM >> (2 + 4)) | (_CHARMEM >> 10) ; Use our char mem
     ;.export _SCREENREG = ($400 >> (2 + 4)) | (_CHARMEM >> 10) ; Use our char mem with stock screen ram position
     ;.export _SCREENREG = (_SCREENMEM >> (2 + 4)) | ($1000 >> 10) ; Use the ROM
     ;.export _SCREENREG = _CHARMEM >> 10 ; Use our char mem with stock screen ram position
+    .export _SCREENMEM
+_SCREENMEM:
+    .res    1024
+    .align  64
+.export _SPRITE_PTR_CARD = SPRITE_CARD / 64
+SPRITE_CARD:
+    .incbin "images/cardsprite.bitmap"
+    .align  64
