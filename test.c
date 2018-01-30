@@ -161,18 +161,6 @@ static void cards(void)
 #undef STEP
 }
 
-extern char SPRITE_PTR_CARD;
-
-static void sprite_setup(void)
-{
-    get_screen_mem()->sprite_ptr[0] = &SPRITE_PTR_CARD;
-    VIC.spr_hi_x = 0;
-    VIC.spr0_x = 100;
-    VIC.spr0_y = 100;
-    VIC.spr_ena = 1; // Enable sprite 1
-    VIC.spr0_color = COLOR_BLACK;
-}
-
 #define RASTER_MIN      51
 #define RASTER_MAX      (RASTER_MIN + SCREEN_HEIGHT * 8)
 
@@ -194,11 +182,11 @@ static void sprite_setup(void)
 static uint16_t posx;
 static uint8_t posy;
 
+extern char SPRITE_PTR_CARD;
+
 static void joy2_process(void)
 {
     uint8_t joyval = ~CIA1.pra;
-
-    while (VIC.rasterline < RASTER_MAX);
 
     if (joyval & JOY_UP) {
         posy -= JOY_SPEED;
@@ -228,9 +216,24 @@ static void joy2_process(void)
     VIC.spr_hi_x &= ~1;
     VIC.spr_hi_x |= posx >> 8;
     VIC.spr0_y = (uint8_t)posy;
-
-    while (VIC.rasterline > RASTER_MAX);
 }
+
+/*
+ * 3 sprites to draw the card.
+ * 24x34 pixels
+ * top: 24x21
+ * bot: 24x13
+ * bg:  24x17 (y doubled) 24x34
+ */
+static void sprite_setup(void)
+{
+    get_screen_mem()->sprite_ptr[0] = &SPRITE_PTR_CARD;
+    VIC.spr_hi_x = 0;
+    VIC.spr_ena = 1; // Enable sprite 1
+    VIC.spr0_color = COLOR_BLACK;
+    joy2_process(); // Set up initial position
+}
+
 
 int main(void)
 {
@@ -245,8 +248,13 @@ int main(void)
 #endif
     //printf("Screenreg 0x %x\n", (char)&SCREENREG);
     //printf("Press return to exit");
-    while (1)
+    while (1) {
+        while (VIC.rasterline < RASTER_MAX);
+
         joy2_process();
+
+        while (VIC.rasterline > RASTER_MAX);
+    }
     while (cbm_k_getin() != '1');
 
     restore_screen_addr();
