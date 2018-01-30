@@ -110,6 +110,7 @@ extern char CARD_LEFT;
 extern char CARD_RIGHT;
 #define CARD(C) ((char)&CARD_ ##C)
 #define CARD_TOP_LEFT(num) (CARD(TOP_LEFT) + num - 1)
+#define CARD_BOTTOM_RIGHT(num) (CARD(BOTTOM_RIGHT) + num - 1)
 
 static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
 {
@@ -137,7 +138,7 @@ static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
     char_addr[offset++] = CARD(BOTTOM_LEFT);
     char_addr[offset++] = CARD(BOTTOM);
     char_addr[offset++] = CARD(BOTTOM);
-    char_addr[offset++] = CARD(BOTTOM_RIGHT);
+    char_addr[offset++] = CARD_BOTTOM_RIGHT(number);
 }
 
 static void cards(void)

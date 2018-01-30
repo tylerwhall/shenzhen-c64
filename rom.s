@@ -15,15 +15,24 @@ CARD_TOP_LEFT:
     .incbin "images/7.bitmap"
     .incbin "images/7.bitmap"
     .incbin "images/7.bitmap"
+    .export _CARD_BOTTOM_RIGHT = (CARD_BOTTOM_RIGHT - _CHARMEM) / 8
+CARD_BOTTOM_RIGHT:
+    .incbin "images/6.reversed.bitmap"
+    .incbin "images/6.reversed.bitmap"
+    .incbin "images/6.reversed.bitmap"
+    .incbin "images/6.reversed.bitmap"
+    .incbin "images/6.reversed.bitmap"
+    .incbin "images/6.reversed.bitmap"
+    .incbin "images/7.reversed.bitmap"
+    .incbin "images/7.reversed.bitmap"
+    .incbin "images/7.reversed.bitmap"
+    .incbin "images/7.reversed.bitmap"
     .export _CARD_TOP = (CARD_TOP - _CHARMEM) / 8
 CARD_TOP:
     .byte   $ff, $00, $00, $00, $00, $00, $00, $00
     .export _CARD_RIGHT = (CARD_RIGHT - _CHARMEM) / 8
 CARD_RIGHT:
     .byte   $01, $01, $01, $01, $01, $01, $01, $01
-    .export _CARD_BOTTOM_RIGHT = (CARD_BOTTOM_RIGHT - _CHARMEM) / 8
-CARD_BOTTOM_RIGHT:
-    .byte   $01, $01, $01, $01, $01, $01, $01, $fe
     .export _CARD_BOTTOM = (CARD_BOTTOM - _CHARMEM) / 8
 CARD_BOTTOM:
     .byte   $00, $00, $00, $00, $00, $00, $00, $ff
