@@ -1,6 +1,6 @@
 thisdir=$(dir $(lastword $(MAKEFILE_LIST)))
 
-IMAGES := 6.bitmap 7.bitmap cardsprite.bitmap
+IMAGES := 6.bitmap 7.bitmap cardsprite_top.bitmap cardsprite_bottom.bitmap cardsprite_bg.bitmap
 IMAGES := $(addprefix $(thisdir), $(IMAGES))
 
 %.mono: %.bmp

@@ -48,7 +48,17 @@ CARD_LEFT:
 _SCREENMEM:
     .res    1024
     .align  64
-.export _SPRITE_PTR_CARD = SPRITE_CARD / 64
-SPRITE_CARD:
-    .incbin "images/cardsprite.bitmap"
+.export _SPRITE_PTR_CARD_TOP = SPRITE_CARD_TOP / 64
+SPRITE_CARD_TOP:
+    .incbin "images/cardsprite_top.bitmap"
+    .align  64
+
+.export _SPRITE_PTR_CARD_BOTTOM = SPRITE_CARD_BOTTOM / 64
+SPRITE_CARD_BOTTOM:
+    .incbin "images/cardsprite_bottom.bitmap"
+    .align  64
+
+.export _SPRITE_PTR_CARD_BG = SPRITE_CARD_BG / 64
+SPRITE_CARD_BG:
+    .incbin "images/cardsprite_bg.bitmap"
     .align  64

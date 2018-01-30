@@ -172,6 +172,14 @@ static void cards(void)
 #define SPRITE_YMIN (SPRITE_YOFFSET)
 #define SPRITE_YMAX (SPRITE_YOFFSET + (SCREEN_HEIGHT * 8) - 2) /* Leave a couple extra pixels so it's still visible */
 
+#define SPRITE_ID_CARD_BG       7
+#define SPRITE_ID_CARD_TOP      6
+#define SPRITE_ID_CARD_BOTTOM   5
+
+#define SPRITE_CARD_MASK    ((1 << SPRITE_ID_CARD_BG) | \
+                             (1 << SPRITE_ID_CARD_TOP) | \
+                             (1 << SPRITE_ID_CARD_BOTTOM))
+
 #define JOY_UP      (1 << 0)
 #define JOY_DOWN    (1 << 1)
 #define JOY_LEFT    (1 << 2)
@@ -181,8 +189,6 @@ static void cards(void)
 
 static uint16_t posx;
 static uint8_t posy;
-
-extern char SPRITE_PTR_CARD;
 
 static void joy2_process(void)
 {
@@ -212,11 +218,23 @@ static void joy2_process(void)
     if (posx < SPRITE_XMIN) {
         posx = SPRITE_XMIN;
     }
-    VIC.spr0_x = (uint8_t)posx;
-    VIC.spr_hi_x &= ~1;
-    VIC.spr_hi_x |= posx >> 8;
-    VIC.spr0_y = (uint8_t)posy;
+    VIC.spr_pos[SPRITE_ID_CARD_BG].x = (uint8_t)posx;
+    VIC.spr_pos[SPRITE_ID_CARD_TOP].x = (uint8_t)posx;
+    VIC.spr_pos[SPRITE_ID_CARD_BOTTOM].x = (uint8_t)posx;
+
+    VIC.spr_hi_x &= ~SPRITE_CARD_MASK;
+    if (posx >> 8) {
+        VIC.spr_hi_x |= SPRITE_CARD_MASK;
+    }
+
+    VIC.spr_pos[SPRITE_ID_CARD_BG].y = (uint8_t)posy;
+    VIC.spr_pos[SPRITE_ID_CARD_TOP].y = (uint8_t)posy;
+    VIC.spr_pos[SPRITE_ID_CARD_BOTTOM].y = (uint8_t)(posy + 21);
 }
+
+extern char SPRITE_PTR_CARD_TOP;
+extern char SPRITE_PTR_CARD_BOTTOM;
+extern char SPRITE_PTR_CARD_BG;
 
 /*
  * 3 sprites to draw the card.
@@ -227,11 +245,15 @@ static void joy2_process(void)
  */
 static void sprite_setup(void)
 {
-    get_screen_mem()->sprite_ptr[0] = &SPRITE_PTR_CARD;
-    VIC.spr_hi_x = 0;
-    VIC.spr_ena = 1; // Enable sprite 1
-    VIC.spr0_color = COLOR_BLACK;
+    get_screen_mem()->sprite_ptr[SPRITE_ID_CARD_BG] = (uint8_t)&SPRITE_PTR_CARD_BG;
+    get_screen_mem()->sprite_ptr[SPRITE_ID_CARD_TOP] = (uint8_t)&SPRITE_PTR_CARD_TOP;
+    get_screen_mem()->sprite_ptr[SPRITE_ID_CARD_BOTTOM] = (uint8_t)&SPRITE_PTR_CARD_BOTTOM;
+    VIC.spr_exp_y = (1 << SPRITE_ID_CARD_BG);
+    VIC.spr_color[SPRITE_ID_CARD_BG] = COLOR_WHITE;
+    VIC.spr_color[SPRITE_ID_CARD_TOP] = COLOR_BLACK;
+    VIC.spr_color[SPRITE_ID_CARD_BOTTOM] = COLOR_BLACK;
     joy2_process(); // Set up initial position
+    VIC.spr_ena = SPRITE_CARD_MASK; // Enable sprites
 }
 
 
