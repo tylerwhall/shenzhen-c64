@@ -32,11 +32,14 @@ endif
 %.o: %.s
 	$(CC) -c $(ASFLAGS) -o $@ $<
 
+include images/Makefile
+rom.o: $(IMAGES)
+
 $(PROGRAM): $(SOURCES)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
-	$(RM) $(SOURCES) $(SOURCES:.o=.d) $(PROGRAM) $(PROGRAM).map *.lst *.lbl
+	$(RM) $(SOURCES) $(SOURCES:.o=.d) $(PROGRAM) $(PROGRAM).map *.lst *.lbl $(CLEANFILES)
 
 dis: $(PROGRAM)
 	da65 $(PROGRAM)

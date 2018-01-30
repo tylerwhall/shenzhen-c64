@@ -4,10 +4,10 @@ _CHARMEM:
     .res    128*8
     ; 128
     ; 6 top left
-    .byte   $7f, $80, $8e, $90, $9e, $92, $9e, $80
+    .incbin "images/6.bitmap"
     ; 129
     ; 7 top left
-    .byte   $7f, $80, $9e, $82, $84, $88, $88, $80
+    .incbin "images/7.bitmap"
     ; 130
     ; top
     .byte   $ff, $00, $00, $00, $00, $00, $00, $00
