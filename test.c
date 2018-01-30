@@ -33,6 +33,12 @@ static void restore_screen_addr(void)
 }
 
 /*
+ * Since we're copying the 2nd 64 characters, this macro allows specifying the
+ * character value in the upper 64 with its real value.
+ */
+#define char_offset(val) ((val) - 64)
+
+/*
  * Copy the character ROM to our CHARMEM reservation
  */
 static void copy_character_rom(void)
@@ -42,7 +48,8 @@ static void copy_character_rom(void)
     // Unmap I/O to get to CHAR_ROM
     oldbank = BANK_REG;
     BANK_REG = oldbank & ~(1 << 2);
-    memcpy(CHARMEM, (void *)0xd800, sizeof(CHARMEM)/2);
+    /* Start from offset 64 of the 2nd char ROM table */
+    memcpy(CHARMEM, (void *)(0xd800 + 64*8), 32*8);
     //memset(CHARMEM+1, 0, sizeof(CHARMEM)-1);
     // Restore banks
     BANK_REG = oldbank;
@@ -51,15 +58,32 @@ static void copy_character_rom(void)
 
 #define SCREEN_WIDTH    40
 #define SCREEN_HEIGHT   25
+#define SCREEN_SIZE     (SCREEN_WIDTH * SCREEN_HEIGHT)
 
 void clear_screen(void)
 {
     char *addr = get_screen_addr();
 
-    memset(addr, 137, SCREEN_WIDTH * SCREEN_HEIGHT);
-    memset(COLOR_RAM, COLOR_LIGHTGREEN, 1000);
-    VIC.bordercolor = COLOR_LIGHTGREEN;
+#if 0
+    /* Display all the characters */
+    {
+        int i;
+        for (i = 0; i < SCREEN_SIZE; i++) {
+            addr[i] = i;
+        }
+    }
+#endif
+    /* Checker pattern with BG color 2 */
+    memset(addr, (2 << 6) | char_offset(94), SCREEN_SIZE / 2);
+    memset(addr + SCREEN_SIZE / 2, (3 << 6) | char_offset(94), SCREEN_SIZE / 2);
+    memset(COLOR_RAM, COLOR_GREEN, SCREEN_SIZE);
+    /* Set Extended Background Color Mode */
+    VIC.ctrl1 |= (1 << 6);
+    VIC.bordercolor = COLOR_BLACK;
     VIC.bgcolor0 = COLOR_WHITE;
+    VIC.bgcolor1 = COLOR_GREEN;
+    VIC.bgcolor2 = COLOR_GRAY2;
+    VIC.bgcolor3 = COLOR_GRAY2;
 }
 
 #define CARD_WIDTH  4
@@ -69,54 +93,48 @@ void clear_screen(void)
 #define NUM_LOWER_STACKS    8
 #define UPPER_STACKS_Y      1
 
+/* ASM defines these symbols as character table offsets */
+extern char CARD_TOP;
+extern char CARD_TOP_LEFT;
+extern char CARD_TOP_RIGHT;
+extern char CARD_BOTTOM;
+extern char CARD_BOTTOM_LEFT;
+extern char CARD_BOTTOM_RIGHT;
+extern char CARD_LEFT;
+extern char CARD_RIGHT;
+#define CARD(C) ((char)&CARD_ ##C)
+#define CARD_TOP_LEFT(num) (CARD(TOP_LEFT) + num - 1)
+
 static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
 {
     char *char_addr = get_screen_addr();
-    uint16_t offset = x + y * 40;
+    register uint16_t offset = x + y * 40;
+    int i;
 
     memset(&COLOR_RAM[offset], color, 4);
-    if (number == 7)
-        char_addr[offset++] = 129;
+    if (number == 6)
+        char_addr[offset++] = CARD_TOP_LEFT(6);
     else
-        char_addr[offset++] = 128;
-    char_addr[offset++] = 130;
-    char_addr[offset++] = 130;
-    char_addr[offset++] = 135;
+        char_addr[offset++] = CARD_TOP_LEFT(7);
+    char_addr[offset++] = CARD(TOP);
+    char_addr[offset++] = CARD(TOP);
+    char_addr[offset++] = CARD(TOP_RIGHT);
     offset += SCREEN_WIDTH - CARD_WIDTH;
 
-    memset(&COLOR_RAM[offset], color, 4);
-    char_addr[offset++] = 136;
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = 131;
-    offset += SCREEN_WIDTH - CARD_WIDTH;
+    for (i = 0; i < 4; i++) {
+        memset(&COLOR_RAM[offset], color, 4);
+        char_addr[offset++] = CARD(LEFT);
+        char_addr[offset++] = ' ';
+        char_addr[offset++] = ' ';
+        char_addr[offset++] = CARD(RIGHT);
+        offset += SCREEN_WIDTH - CARD_WIDTH;
+    }
 
     memset(&COLOR_RAM[offset], color, 4);
-    char_addr[offset++] = 136;
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = 131;
-    offset += SCREEN_WIDTH - CARD_WIDTH;
-
-    memset(&COLOR_RAM[offset], color, 4);
-    char_addr[offset++] = 136;
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = 131;
-    offset += SCREEN_WIDTH - CARD_WIDTH;
-
-    memset(&COLOR_RAM[offset], color, 4);
-    char_addr[offset++] = 136;
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = ' ';
-    char_addr[offset++] = 131;
-    offset += SCREEN_WIDTH - CARD_WIDTH;
-
-    memset(&COLOR_RAM[offset], color, 4);
-    char_addr[offset++] = 134;
-    char_addr[offset++] = 133;
-    char_addr[offset++] = 133;
-    char_addr[offset++] = 132;
+    char_addr[offset++] = CARD(BOTTOM_LEFT);
+    char_addr[offset++] = CARD(BOTTOM);
+    char_addr[offset++] = CARD(BOTTOM);
+    char_addr[offset++] = CARD(BOTTOM_RIGHT);
 }
 
 static void cards(void)

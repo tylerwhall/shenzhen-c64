@@ -1,35 +1,41 @@
     .segment "CHARMEM"
     .export _CHARMEM
 _CHARMEM:
-    .res    128*8
-    ; 128
-    ; 6 top left
+    .res    33*8 ; 33 chars from the ROM table will be copied here. 33rd is space (blank) character
+    ; Numbers 1-10
+    .export _CARD_TOP_LEFT = (CARD_TOP_LEFT - _CHARMEM) / 8
+CARD_TOP_LEFT:
     .incbin "images/6.bitmap"
-    ; 129
-    ; 7 top left
+    .incbin "images/6.bitmap"
+    .incbin "images/6.bitmap"
+    .incbin "images/6.bitmap"
+    .incbin "images/6.bitmap"
+    .incbin "images/6.bitmap"
     .incbin "images/7.bitmap"
-    ; 130
-    ; top
+    .incbin "images/7.bitmap"
+    .incbin "images/7.bitmap"
+    .incbin "images/7.bitmap"
+    .export _CARD_TOP = (CARD_TOP - _CHARMEM) / 8
+CARD_TOP:
     .byte   $ff, $00, $00, $00, $00, $00, $00, $00
-    ; 131
-    ; right
+    .export _CARD_RIGHT = (CARD_RIGHT - _CHARMEM) / 8
+CARD_RIGHT:
     .byte   $01, $01, $01, $01, $01, $01, $01, $01
-    ; 132
-    ; bottom right
+    .export _CARD_BOTTOM_RIGHT = (CARD_BOTTOM_RIGHT - _CHARMEM) / 8
+CARD_BOTTOM_RIGHT:
     .byte   $01, $01, $01, $01, $01, $01, $01, $fe
-    ; 133
-    ; bottom
+    .export _CARD_BOTTOM = (CARD_BOTTOM - _CHARMEM) / 8
+CARD_BOTTOM:
     .byte   $00, $00, $00, $00, $00, $00, $00, $ff
-    ; 134
-    ; bottom left
+    .export _CARD_BOTTOM_LEFT = (CARD_BOTTOM_LEFT - _CHARMEM) / 8
+CARD_BOTTOM_LEFT:
     .byte   $80, $80, $80, $80, $80, $80, $80, $7f
-    ; 135
-    ; top right
+    .export _CARD_TOP_RIGHT = (CARD_TOP_RIGHT - _CHARMEM) / 8
+CARD_TOP_RIGHT:
     .byte   $fe, $01, $01, $01, $01, $01, $01, $01
-    ; 136
-    ; left
+    .export _CARD_LEFT = (CARD_LEFT - _CHARMEM) / 8
+CARD_LEFT:
     .byte   $80, $80, $80, $80, $80, $80, $80, $80
-    ; 137
     ; solid
     .byte   $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
     .align    256 * 8
