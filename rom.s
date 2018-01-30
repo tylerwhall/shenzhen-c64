@@ -3,8 +3,9 @@
 _CHARMEM:
     .res    33*8 ; 33 chars from the ROM table will be copied here. 33rd is space (blank) character
     ; Numbers 1-10
-    .export _CARD_TOP_LEFT = (CARD_TOP_LEFT - _CHARMEM) / 8
-CARD_TOP_LEFT:
+    .export _CARD_IDX_TOP_LEFT = (_CARD_TOP_LEFT - _CHARMEM) / 8
+    .export _CARD_TOP_LEFT
+_CARD_TOP_LEFT:
     .incbin "images/6.bitmap"
     .incbin "images/6.bitmap"
     .incbin "images/6.bitmap"
@@ -15,8 +16,9 @@ CARD_TOP_LEFT:
     .incbin "images/7.bitmap"
     .incbin "images/7.bitmap"
     .incbin "images/7.bitmap"
-    .export _CARD_BOTTOM_RIGHT = (CARD_BOTTOM_RIGHT - _CHARMEM) / 8
-CARD_BOTTOM_RIGHT:
+    .export _CARD_IDX_BOTTOM_RIGHT = (_CARD_BOTTOM_RIGHT - _CHARMEM) / 8
+    .export _CARD_BOTTOM_RIGHT
+_CARD_BOTTOM_RIGHT:
     .incbin "images/6.reversed.bitmap"
     .incbin "images/6.reversed.bitmap"
     .incbin "images/6.reversed.bitmap"
@@ -27,22 +29,22 @@ CARD_BOTTOM_RIGHT:
     .incbin "images/7.reversed.bitmap"
     .incbin "images/7.reversed.bitmap"
     .incbin "images/7.reversed.bitmap"
-    .export _CARD_TOP = (CARD_TOP - _CHARMEM) / 8
+    .export _CARD_IDX_TOP = (CARD_TOP - _CHARMEM) / 8
 CARD_TOP:
     .byte   $ff, $00, $00, $00, $00, $00, $00, $00
-    .export _CARD_RIGHT = (CARD_RIGHT - _CHARMEM) / 8
+    .export _CARD_IDX_RIGHT = (CARD_RIGHT - _CHARMEM) / 8
 CARD_RIGHT:
     .byte   $01, $01, $01, $01, $01, $01, $01, $01
-    .export _CARD_BOTTOM = (CARD_BOTTOM - _CHARMEM) / 8
+    .export _CARD_IDX_BOTTOM = (CARD_BOTTOM - _CHARMEM) / 8
 CARD_BOTTOM:
     .byte   $00, $00, $00, $00, $00, $00, $00, $ff
-    .export _CARD_BOTTOM_LEFT = (CARD_BOTTOM_LEFT - _CHARMEM) / 8
+    .export _CARD_IDX_BOTTOM_LEFT = (CARD_BOTTOM_LEFT - _CHARMEM) / 8
 CARD_BOTTOM_LEFT:
     .byte   $80, $80, $80, $80, $80, $80, $80, $7f
-    .export _CARD_TOP_RIGHT = (CARD_TOP_RIGHT - _CHARMEM) / 8
+    .export _CARD_IDX_TOP_RIGHT = (CARD_TOP_RIGHT - _CHARMEM) / 8
 CARD_TOP_RIGHT:
     .byte   $fe, $01, $01, $01, $01, $01, $01, $01
-    .export _CARD_LEFT = (CARD_LEFT - _CHARMEM) / 8
+    .export _CARD_IDX_LEFT = (CARD_LEFT - _CHARMEM) / 8
 CARD_LEFT:
     .byte   $80, $80, $80, $80, $80, $80, $80, $80
     ; solid
@@ -57,13 +59,15 @@ CARD_LEFT:
 _SCREENMEM:
     .res    1024
     .align  64
-.export _SPRITE_PTR_CARD_TOP = SPRITE_CARD_TOP / 64
-SPRITE_CARD_TOP:
+    .export _SPRITE_PTR_CARD_TOP = _SPRITE_CARD_TOP / 64
+    .export _SPRITE_CARD_TOP
+_SPRITE_CARD_TOP:
     .incbin "images/cardsprite_top.bitmap"
     .align  64
 
-.export _SPRITE_PTR_CARD_BOTTOM = SPRITE_CARD_BOTTOM / 64
-SPRITE_CARD_BOTTOM:
+    .export _SPRITE_PTR_CARD_BOTTOM = _SPRITE_CARD_BOTTOM / 64
+    .export _SPRITE_CARD_BOTTOM
+_SPRITE_CARD_BOTTOM:
     .incbin "images/cardsprite_bottom.bitmap"
     .align  64
 

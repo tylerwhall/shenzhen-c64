@@ -99,18 +99,21 @@ void clear_screen(void)
 #define NUM_LOWER_STACKS    8
 #define UPPER_STACKS_Y      1
 
+extern char CARD_TOP_LEFT[8]; /* Acutal address */
+extern char CARD_BOTTOM_RIGHT[8]; /* Acutal address */
+
 /* ASM defines these symbols as character table offsets */
-extern char CARD_TOP;
-extern char CARD_TOP_LEFT;
-extern char CARD_TOP_RIGHT;
-extern char CARD_BOTTOM;
-extern char CARD_BOTTOM_LEFT;
-extern char CARD_BOTTOM_RIGHT;
-extern char CARD_LEFT;
-extern char CARD_RIGHT;
-#define CARD(C) ((char)&CARD_ ##C)
-#define CARD_TOP_LEFT(num) (CARD(TOP_LEFT) + num - 1)
-#define CARD_BOTTOM_RIGHT(num) (CARD(BOTTOM_RIGHT) + num - 1)
+extern char CARD_IDX_TOP;
+extern char CARD_IDX_TOP_LEFT;
+extern char CARD_IDX_TOP_RIGHT;
+extern char CARD_IDX_BOTTOM;
+extern char CARD_IDX_BOTTOM_LEFT;
+extern char CARD_IDX_BOTTOM_RIGHT;
+extern char CARD_IDX_LEFT;
+extern char CARD_IDX_RIGHT;
+#define CARD_IDX(C) ((char)&CARD_IDX_ ##C)
+#define CARD_IDX_TOP_LEFT(num) (CARD_IDX(TOP_LEFT) + num - 1)
+#define CARD_IDX_BOTTOM_RIGHT(num) (CARD_IDX(BOTTOM_RIGHT) + num - 1)
 
 static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
 {
@@ -119,26 +122,26 @@ static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
     int i;
 
     memset(&COLOR_RAM[offset], color, CARD_WIDTH);
-    char_addr[offset++] = CARD_TOP_LEFT(number);
-    char_addr[offset++] = CARD(TOP);
-    char_addr[offset++] = CARD(TOP);
-    char_addr[offset++] = CARD(TOP_RIGHT);
+    char_addr[offset++] = CARD_IDX_TOP_LEFT(number);
+    char_addr[offset++] = CARD_IDX(TOP);
+    char_addr[offset++] = CARD_IDX(TOP);
+    char_addr[offset++] = CARD_IDX(TOP_RIGHT);
     offset += SCREEN_WIDTH - CARD_WIDTH;
 
     for (i = 0; i < CARD_HEIGHT - 2; i++) {
         memset(&COLOR_RAM[offset], color, CARD_WIDTH);
-        char_addr[offset++] = CARD(LEFT);
+        char_addr[offset++] = CARD_IDX(LEFT);
         char_addr[offset++] = ' ';
         char_addr[offset++] = ' ';
-        char_addr[offset++] = CARD(RIGHT);
+        char_addr[offset++] = CARD_IDX(RIGHT);
         offset += SCREEN_WIDTH - CARD_WIDTH;
     }
 
     memset(&COLOR_RAM[offset], color, CARD_WIDTH);
-    char_addr[offset++] = CARD(BOTTOM_LEFT);
-    char_addr[offset++] = CARD(BOTTOM);
-    char_addr[offset++] = CARD(BOTTOM);
-    char_addr[offset++] = CARD_BOTTOM_RIGHT(number);
+    char_addr[offset++] = CARD_IDX(BOTTOM_LEFT);
+    char_addr[offset++] = CARD_IDX(BOTTOM);
+    char_addr[offset++] = CARD_IDX(BOTTOM);
+    char_addr[offset++] = CARD_IDX_BOTTOM_RIGHT(number);
 }
 
 static void cards(void)
@@ -233,9 +236,33 @@ static void joy2_process(void)
     VIC.spr_pos[SPRITE_ID_CARD_BOTTOM].y = (uint8_t)(posy + 21);
 }
 
-extern char SPRITE_PTR_CARD_TOP;
-extern char SPRITE_PTR_CARD_BOTTOM;
-extern char SPRITE_PTR_CARD_BG;
+extern uint8_t SPRITE_PTR_CARD_TOP;
+extern uint8_t SPRITE_PTR_CARD_BOTTOM;
+extern uint8_t SPRITE_PTR_CARD_BG;
+extern uint8_t SPRITE_CARD_TOP[63];
+extern uint8_t SPRITE_CARD_BOTTOM[63];
+
+/*
+ * Copy a character (8x8) bitmap to an 8x8 location in a sprite of width 24.
+ * Must be byte aligned.
+ */
+static void copy_char_to_sprite(uint8_t *c, uint8_t *sprite)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        *sprite = c[i];
+        sprite += 3;
+    }
+}
+
+static void sprite_card_personify(uint8_t number)
+{
+
+    copy_char_to_sprite(CARD_TOP_LEFT + number * 8, SPRITE_CARD_TOP);
+    /* Bottom right is row 26, col 2 */
+    copy_char_to_sprite(CARD_BOTTOM_RIGHT + number * 8, SPRITE_CARD_BOTTOM + (26 - 21) * 3 + 2);
+}
 
 /*
  * 3 sprites to draw the card.
@@ -255,6 +282,8 @@ static void sprite_setup(void)
     VIC.spr_color[SPRITE_ID_CARD_BOTTOM] = COLOR_BLACK;
     joy2_process(); // Set up initial position
     VIC.spr_ena = SPRITE_CARD_MASK; // Enable sprites
+
+    sprite_card_personify(7);
 }
 
 
