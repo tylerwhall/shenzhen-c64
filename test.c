@@ -87,7 +87,7 @@ void clear_screen(void)
 }
 
 #define CARD_WIDTH  4
-#define CARD_HEIGHT 6
+#define CARD_HEIGHT 5 // TODO: make card height larger. Would require multiple sprites.
 
 #define LOWER_STACKS_Y      (CARD_HEIGHT + 2)
 #define NUM_LOWER_STACKS    8
@@ -112,16 +112,13 @@ static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
     int i;
 
     memset(&COLOR_RAM[offset], color, 4);
-    if (number == 6)
-        char_addr[offset++] = CARD_TOP_LEFT(6);
-    else
-        char_addr[offset++] = CARD_TOP_LEFT(7);
+    char_addr[offset++] = CARD_TOP_LEFT(number);
     char_addr[offset++] = CARD(TOP);
     char_addr[offset++] = CARD(TOP);
     char_addr[offset++] = CARD(TOP_RIGHT);
     offset += SCREEN_WIDTH - CARD_WIDTH;
 
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 3; i++) {
         memset(&COLOR_RAM[offset], color, 4);
         char_addr[offset++] = CARD(LEFT);
         char_addr[offset++] = ' ';
