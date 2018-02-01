@@ -75,3 +75,8 @@ _SPRITE_CARD_BOTTOM:
 SPRITE_CARD_BG:
     .incbin "images/cardsprite_bg.bitmap"
     .align  64
+
+.export _SPRITE_PTR_MOUSE = SPRITE_MOUSE / 64
+SPRITE_MOUSE:
+    .incbin "images/mouse_sprite.bitmap"
+    .align  64

@@ -3,7 +3,8 @@ thisdir=$(dir $(lastword $(MAKEFILE_LIST)))
 IMAGES := \
     6.bitmap 7.bitmap \
     6.reversed.bitmap 7.reversed.bitmap \
-    cardsprite_top.bitmap cardsprite_bottom.bitmap cardsprite_bg.bitmap
+    cardsprite_top.bitmap cardsprite_bottom.bitmap cardsprite_bg.bitmap \
+    mouse_sprite.bitmap
 
 IMAGES := $(addprefix $(thisdir), $(IMAGES))
 

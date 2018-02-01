@@ -9,26 +9,12 @@
 
 #define CARD_WIDTH  4
 #define CARD_HEIGHT 7
+#define CARD_WIDTH_PX   (CARD_WIDTH * 8)
+#define CARD_HEIGHT_PX  (CARD_HEIGHT * 8)
 
 #define LOWER_STACKS_Y      (CARD_HEIGHT + 2)
 #define NUM_LOWER_STACKS    8
 #define UPPER_STACKS_Y      1
-
-extern char CARD_TOP_LEFT[8]; /* Acutal address */
-extern char CARD_BOTTOM_RIGHT[8]; /* Acutal address */
-
-/* ASM defines these symbols as character table offsets */
-extern char CARD_IDX_TOP;
-extern char CARD_IDX_TOP_LEFT;
-extern char CARD_IDX_TOP_RIGHT;
-extern char CARD_IDX_BOTTOM;
-extern char CARD_IDX_BOTTOM_LEFT;
-extern char CARD_IDX_BOTTOM_RIGHT;
-extern char CARD_IDX_LEFT;
-extern char CARD_IDX_RIGHT;
-#define CARD_IDX(C) ((char)&CARD_IDX_ ##C)
-#define CARD_IDX_TOP_LEFT(num) (CARD_IDX(TOP_LEFT) + num - 1)
-#define CARD_IDX_BOTTOM_RIGHT(num) (CARD_IDX(BOTTOM_RIGHT) + num - 1)
 
 static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
 {
@@ -94,10 +80,22 @@ static void cards(void)
 #define SPRITE_ID_CARD_BG       7
 #define SPRITE_ID_CARD_TOP      6
 #define SPRITE_ID_CARD_BOTTOM   5
+#define SPRITE_ID_MOUSE         0
 
 #define SPRITE_CARD_MASK    ((1 << SPRITE_ID_CARD_BG) | \
                              (1 << SPRITE_ID_CARD_TOP) | \
                              (1 << SPRITE_ID_CARD_BOTTOM))
+#define SPRITE_MOUSE_MASK   (1 << SPRITE_ID_MOUSE)
+
+/*
+ * 3 sprites to draw the card.
+ * 24x34 pixels
+ * top: 24x21
+ * bot: 24x13
+ * bg:  24x17 (y doubled) 24x34
+ */
+#define SPRITE_CARD_WIDTH_PX    (24)
+#define SPRITE_CARD_HEIGHT_PX   (34)
 
 #define JOY_UP      (1 << 0)
 #define JOY_DOWN    (1 << 1)
@@ -111,6 +109,8 @@ static uint8_t posy;
 
 static void joy2_process(void)
 {
+    uint16_t card_posx;
+    uint8_t card_posy;
     uint8_t joyval = ~CIA1.pra;
 
     if (joyval & JOY_UP) {
@@ -137,25 +137,26 @@ static void joy2_process(void)
     if (posx < SPRITE_XMIN) {
         posx = SPRITE_XMIN;
     }
-    VIC.spr_pos[SPRITE_ID_CARD_BG].x = (uint8_t)posx;
-    VIC.spr_pos[SPRITE_ID_CARD_TOP].x = (uint8_t)posx;
-    VIC.spr_pos[SPRITE_ID_CARD_BOTTOM].x = (uint8_t)posx;
+    card_posx = posx - (SPRITE_CARD_WIDTH_PX / 2);
+    VIC.spr_pos[SPRITE_ID_CARD_BG].x = (uint8_t)card_posx;
+    VIC.spr_pos[SPRITE_ID_CARD_TOP].x = (uint8_t)card_posx;
+    VIC.spr_pos[SPRITE_ID_CARD_BOTTOM].x = (uint8_t)card_posx;
+    VIC.spr_pos[SPRITE_ID_MOUSE].x = (uint8_t)posx;
 
-    VIC.spr_hi_x &= ~SPRITE_CARD_MASK;
-    if (posx >> 8) {
+    VIC.spr_hi_x &= ~(SPRITE_CARD_MASK | SPRITE_MOUSE_MASK);
+    if (card_posx >> 8) {
         VIC.spr_hi_x |= SPRITE_CARD_MASK;
     }
+    if (posx >> 8) {
+        VIC.spr_hi_x |= SPRITE_MOUSE_MASK;
+    }
 
-    VIC.spr_pos[SPRITE_ID_CARD_BG].y = (uint8_t)posy;
-    VIC.spr_pos[SPRITE_ID_CARD_TOP].y = (uint8_t)posy;
-    VIC.spr_pos[SPRITE_ID_CARD_BOTTOM].y = (uint8_t)(posy + 21);
+    card_posy = posy - (SPRITE_CARD_HEIGHT_PX / 2);
+    VIC.spr_pos[SPRITE_ID_CARD_BG].y = (uint8_t)card_posy;
+    VIC.spr_pos[SPRITE_ID_CARD_TOP].y = (uint8_t)card_posy;
+    VIC.spr_pos[SPRITE_ID_CARD_BOTTOM].y = (uint8_t)(card_posy + 21);
+    VIC.spr_pos[SPRITE_ID_MOUSE].y = (uint8_t)posy;
 }
-
-extern uint8_t SPRITE_PTR_CARD_TOP;
-extern uint8_t SPRITE_PTR_CARD_BOTTOM;
-extern uint8_t SPRITE_PTR_CARD_BG;
-extern uint8_t SPRITE_CARD_TOP[63];
-extern uint8_t SPRITE_CARD_BOTTOM[63];
 
 /*
  * Copy a character (8x8) bitmap to an 8x8 location in a sprite of width 24.
@@ -179,24 +180,19 @@ static void sprite_card_personify(uint8_t number)
     copy_char_to_sprite(CARD_BOTTOM_RIGHT + number * 8, SPRITE_CARD_BOTTOM + (26 - 21) * 3 + 2);
 }
 
-/*
- * 3 sprites to draw the card.
- * 24x34 pixels
- * top: 24x21
- * bot: 24x13
- * bg:  24x17 (y doubled) 24x34
- */
 static void sprite_setup(void)
 {
     get_screen_mem()->sprite_ptr[SPRITE_ID_CARD_BG] = (uint8_t)&SPRITE_PTR_CARD_BG;
     get_screen_mem()->sprite_ptr[SPRITE_ID_CARD_TOP] = (uint8_t)&SPRITE_PTR_CARD_TOP;
     get_screen_mem()->sprite_ptr[SPRITE_ID_CARD_BOTTOM] = (uint8_t)&SPRITE_PTR_CARD_BOTTOM;
+    get_screen_mem()->sprite_ptr[SPRITE_ID_MOUSE] = (uint8_t)&SPRITE_PTR_MOUSE;
     VIC.spr_exp_y = (1 << SPRITE_ID_CARD_BG);
     VIC.spr_color[SPRITE_ID_CARD_BG] = COLOR_WHITE;
     VIC.spr_color[SPRITE_ID_CARD_TOP] = COLOR_BLACK;
     VIC.spr_color[SPRITE_ID_CARD_BOTTOM] = COLOR_BLACK;
+    VIC.spr_color[SPRITE_ID_MOUSE] = COLOR_BLACK;
     joy2_process(); // Set up initial position
-    VIC.spr_ena = SPRITE_CARD_MASK; // Enable sprites
+    VIC.spr_ena = SPRITE_CARD_MASK | SPRITE_MOUSE_MASK; // Enable sprites
 
     sprite_card_personify(7);
 }
