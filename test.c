@@ -41,9 +41,9 @@ static uint8_t posy;
 /* ID of card held by cursor. 0 if none */
 static uint8_t held_card;
 /* Pointer into screen memory where card drawing is taking place (avoids parameter passing) */
-static uint8_t *card_draw_screenpos;
+uint8_t *card_draw_screenpos;
 /* Same as above for color ram */
-static uint8_t *card_draw_colorpos;
+uint8_t *card_draw_colorpos;
 
 /* Card positions */
 
@@ -63,10 +63,15 @@ static card_t stacks[NUM_STACKS][STACK_MAX_CARDS];
 #define STACK_MAX_ROWS  (SCREEN_HEIGHT - LOWER_STACKS_Y)
 
 /* Fill one row of a card's color memory */
-static void set_card_row_color(uint8_t color)
+#if 0
+static void fastcall set_card_row_color(uint8_t color)
 {
     memset(card_draw_colorpos, color, CARD_WIDTH);
 }
+#else
+extern void fastcall asm_set_card_row_color(uint8_t color);
+#define set_card_row_color(color) asm_set_card_row_color(color)
+#endif
 
 #define card_draw_line_advance() { \
     card_draw_screenpos += SCREEN_WIDTH; \
@@ -79,6 +84,7 @@ static void set_card_row_color(uint8_t color)
     card_draw_colorpos = &COLOR_RAM[offset]; \
 }
 
+#if 0
 static void draw_card_top(card_t card)
 {
     card_draw_screenpos[0] = CARD_IDX_TOP_LEFT(card_number(card));
@@ -86,6 +92,10 @@ static void draw_card_top(card_t card)
     card_draw_screenpos[2] = CARD_IDX(TOP);
     card_draw_screenpos[3] = CARD_IDX(TOP_RIGHT);
 }
+#else
+extern void fastcall asm_draw_card_top(card_t card);
+#define draw_card_top(card) asm_draw_card_top(card)
+#endif
 
 /* Draw the left, two middle spaces, and right */
 static void draw_card_middle(void)
@@ -115,6 +125,7 @@ static void draw_card_middle(void)
 #endif
 }
 
+#if 0
 static void draw_card_bottom(card_t card)
 {
     card_draw_screenpos[0] = CARD_IDX(BOTTOM_LEFT);
@@ -122,6 +133,10 @@ static void draw_card_bottom(card_t card)
     card_draw_screenpos[2] = CARD_IDX(BOTTOM);
     card_draw_screenpos[3] = CARD_IDX_BOTTOM_RIGHT(card_number(card));
 }
+#else
+extern void fastcall asm_draw_card_bottom(card_t card);
+#define draw_card_bottom(card) asm_draw_card_bottom(card)
+#endif
 
 static void draw_card(uint8_t x, uint8_t y, card_t card)
 {

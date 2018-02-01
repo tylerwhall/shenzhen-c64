@@ -2,7 +2,7 @@ export CC65_HOME = /usr/share/cc65
 CC65_TARGET = c64
 
 
-SOURCES = test.o screen.o charset.o
+SOURCES = test.o screen.o charset.o card.o
 PROGRAM = test
 
 ifdef CC65_TARGET
