@@ -40,6 +40,10 @@ static uint16_t posx;
 static uint8_t posy;
 /* ID of card held by cursor. 0 if none */
 static uint8_t held_card;
+/* Pointer into screen memory where card drawing is taking place (avoids parameter passing) */
+static uint8_t *card_draw_screenpos;
+/* Same as above for color ram */
+static uint8_t *card_draw_colorpos;
 
 /* Card positions */
 
@@ -52,33 +56,69 @@ static uint8_t held_card;
 #define NUM_LOWER_STACKS    8
 #define UPPER_STACKS_Y      1
 
+/* Fill one row of a card's color memory */
+static void set_card_row_color(uint8_t color)
+{
+    memset(card_draw_colorpos, color, CARD_WIDTH);
+}
+
+static void draw_card_top(card_t card)
+{
+    card_draw_screenpos[0] = CARD_IDX_TOP_LEFT(card_number(card));
+    card_draw_screenpos[1] = CARD_IDX(TOP);
+    card_draw_screenpos[2] = CARD_IDX(TOP);
+    card_draw_screenpos[3] = CARD_IDX(TOP_RIGHT);
+}
+
+static void draw_card_middle(void)
+{
+    card_draw_screenpos[0] = CARD_IDX(LEFT);
+    card_draw_screenpos[1] = ' ';
+    card_draw_screenpos[2] = ' ';
+    card_draw_screenpos[3] = CARD_IDX(RIGHT);
+}
+
+static void draw_card_bottom(card_t card)
+{
+    card_draw_screenpos[0] = CARD_IDX(BOTTOM_LEFT);
+    card_draw_screenpos[1] = CARD_IDX(BOTTOM);
+    card_draw_screenpos[2] = CARD_IDX(BOTTOM);
+    card_draw_screenpos[3] = CARD_IDX_BOTTOM_RIGHT(card_number(card));
+}
+
+#define screenpos_oob() (card_draw_screenpos >= &get_screen_mem()->mem[0] + (SCREENMEM_SIZE - 3))
 static void draw_card(uint8_t x, uint8_t y, card_t card)
 {
     char *char_addr = &get_screen_mem()->mem[0];
     register uint16_t offset = x + y * 40;
     int i;
 
-    memset(&COLOR_RAM[offset], card_color(card), CARD_WIDTH);
-    char_addr[offset++] = CARD_IDX_TOP_LEFT(card_number(card));
-    char_addr[offset++] = CARD_IDX(TOP);
-    char_addr[offset++] = CARD_IDX(TOP);
-    char_addr[offset++] = CARD_IDX(TOP_RIGHT);
-    offset += SCREEN_WIDTH - CARD_WIDTH;
+    card_draw_screenpos = &get_screen_mem()->mem[offset];
+    card_draw_colorpos = &COLOR_RAM[offset];
+
+    if (screenpos_oob())
+        return;
+
+    draw_card_top(card);
+    set_card_row_color(card_color(card));
+    card_draw_screenpos += SCREEN_WIDTH;
+    card_draw_colorpos += SCREEN_WIDTH;
+
 
     for (i = 0; i < CARD_HEIGHT - 2; i++) {
-        memset(&COLOR_RAM[offset], card_color(card), CARD_WIDTH);
-        char_addr[offset++] = CARD_IDX(LEFT);
-        char_addr[offset++] = ' ';
-        char_addr[offset++] = ' ';
-        char_addr[offset++] = CARD_IDX(RIGHT);
-        offset += SCREEN_WIDTH - CARD_WIDTH;
+        if (screenpos_oob())
+            return;
+        draw_card_middle();
+        set_card_row_color(card_color(card));
+        card_draw_screenpos += SCREEN_WIDTH;
+        card_draw_colorpos += SCREEN_WIDTH;
     }
 
-    memset(&COLOR_RAM[offset], card_color(card), CARD_WIDTH);
-    char_addr[offset++] = CARD_IDX(BOTTOM_LEFT);
-    char_addr[offset++] = CARD_IDX(BOTTOM);
-    char_addr[offset++] = CARD_IDX(BOTTOM);
-    char_addr[offset++] = CARD_IDX_BOTTOM_RIGHT(card_number(card));
+    if (screenpos_oob())
+        return;
+
+    draw_card_bottom(card);
+    set_card_row_color(card_color(card));
 }
 
 static void cards(void)

@@ -1,8 +1,9 @@
 #ifndef _CHARSET_H_
 #define _CHARSET_H_
 
+#define SCREENMEM_SIZE 1000
 struct screen_memory {
-    char mem[1000];
+    char mem[SCREENMEM_SIZE];
     char pad[16];
     char sprite_ptr[8];
 };
