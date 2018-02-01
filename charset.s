@@ -6,29 +6,27 @@ _CHARMEM:
     .export _CARD_IDX_TOP_LEFT = (_CARD_TOP_LEFT - _CHARMEM) / 8
     .export _CARD_TOP_LEFT
 _CARD_TOP_LEFT:
-    .incbin "images/6.bitmap"
-    .incbin "images/6.bitmap"
-    .incbin "images/6.bitmap"
-    .incbin "images/6.bitmap"
-    .incbin "images/6.bitmap"
+    .incbin "images/1.bitmap"
+    .incbin "images/2.bitmap"
+    .incbin "images/3.bitmap"
+    .incbin "images/4.bitmap"
+    .incbin "images/5.bitmap"
     .incbin "images/6.bitmap"
     .incbin "images/7.bitmap"
-    .incbin "images/7.bitmap"
-    .incbin "images/7.bitmap"
-    .incbin "images/7.bitmap"
+    .incbin "images/8.bitmap"
+    .incbin "images/9.bitmap" ; Really this is the same a 6 reversed
     .export _CARD_IDX_BOTTOM_RIGHT = (_CARD_BOTTOM_RIGHT - _CHARMEM) / 8
     .export _CARD_BOTTOM_RIGHT
 _CARD_BOTTOM_RIGHT:
-    .incbin "images/6.reversed.bitmap"
-    .incbin "images/6.reversed.bitmap"
-    .incbin "images/6.reversed.bitmap"
-    .incbin "images/6.reversed.bitmap"
-    .incbin "images/6.reversed.bitmap"
+    .incbin "images/1.reversed.bitmap"
+    .incbin "images/2.reversed.bitmap"
+    .incbin "images/3.reversed.bitmap"
+    .incbin "images/4.reversed.bitmap"
+    .incbin "images/5.reversed.bitmap"
     .incbin "images/6.reversed.bitmap"
     .incbin "images/7.reversed.bitmap"
-    .incbin "images/7.reversed.bitmap"
-    .incbin "images/7.reversed.bitmap"
-    .incbin "images/7.reversed.bitmap"
+    .incbin "images/8.reversed.bitmap"
+    .incbin "images/9.reversed.bitmap"
     .export _CARD_IDX_TOP = (CARD_TOP - _CHARMEM) / 8
 CARD_TOP:
     .byte   $ff, $00, $00, $00, $00, $00, $00, $00
