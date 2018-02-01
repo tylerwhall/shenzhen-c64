@@ -1,11 +1,16 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 #include <cbm.h>
 #include <6502.h>
 
 #include "screen.h"
 #include "charset.h"
+
+/* Cursor position */
+static uint16_t posx;
+static uint8_t posy;
 
 #define CARD_WIDTH  4
 #define CARD_HEIGHT 7
@@ -87,6 +92,9 @@ static void cards(void)
                              (1 << SPRITE_ID_CARD_BOTTOM))
 #define SPRITE_MOUSE_MASK   (1 << SPRITE_ID_MOUSE)
 
+#define show_card_sprites() { VIC.spr_ena |= SPRITE_CARD_MASK; }
+#define hide_card_sprites() { VIC.spr_ena &= ~SPRITE_CARD_MASK; }
+
 /*
  * 3 sprites to draw the card.
  * 24x34 pixels
@@ -101,17 +109,40 @@ static void cards(void)
 #define JOY_DOWN    (1 << 1)
 #define JOY_LEFT    (1 << 2)
 #define JOY_RIGHT   (1 << 3)
+#define JOY_BTN     (1 << 4)
 
 #define JOY_SPEED 4
 
-static uint16_t posx;
-static uint8_t posy;
+/* Debounced button state. */
+static bool button_state;
+static uint8_t button_state_frames;
+#define button_changed()    (button_state_frames == 2) /* 2 frame debounce interval */
 
 static void joy2_process(void)
 {
     uint16_t card_posx;
     uint8_t card_posy;
     uint8_t joyval = ~CIA1.pra;
+    bool cur_button_state;
+
+    /* Handle button debounce */
+    cur_button_state = !!(joyval & JOY_BTN);
+    if (cur_button_state == button_state) {
+        if (button_state_frames < 255) {
+            button_state_frames++;
+        }
+    } else {
+        button_state_frames = 1;
+    }
+    button_state = cur_button_state;
+
+    if (button_changed()) {
+        if (button_state) {
+            show_card_sprites();
+        } else {
+            hide_card_sprites();
+        }
+    }
 
     if (joyval & JOY_UP) {
         posy -= JOY_SPEED;
@@ -191,8 +222,8 @@ static void sprite_setup(void)
     VIC.spr_color[SPRITE_ID_CARD_TOP] = COLOR_BLACK;
     VIC.spr_color[SPRITE_ID_CARD_BOTTOM] = COLOR_BLACK;
     VIC.spr_color[SPRITE_ID_MOUSE] = COLOR_BLACK;
+    VIC.spr_ena = SPRITE_MOUSE_MASK; // Enable mouse
     joy2_process(); // Set up initial position
-    VIC.spr_ena = SPRITE_CARD_MASK | SPRITE_MOUSE_MASK; // Enable sprites
 
     sprite_card_personify(7);
 }
