@@ -245,9 +245,11 @@ int main(void)
     while (1) {
         while (VIC.rasterline < RASTER_MAX);
 
+        VIC.bordercolor = COLOR_RED;
         joy2_process();
+        VIC.bordercolor = COLOR_BLACK;
 
-        while (VIC.rasterline > RASTER_MAX);
+        while (VIC.rasterline >= RASTER_MAX);
     }
     while (cbm_k_getin() != '1');
 
