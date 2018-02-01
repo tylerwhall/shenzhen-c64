@@ -2,7 +2,7 @@ export CC65_HOME = /usr/share/cc65
 CC65_TARGET = c64
 
 
-SOURCES = test.o rom.o
+SOURCES = test.o screen.o charset.o
 PROGRAM = test
 
 ifdef CC65_TARGET
@@ -33,7 +33,7 @@ endif
 	$(CC) -c $(ASFLAGS) -o $@ $<
 
 include images/Makefile
-rom.o: $(IMAGES)
+charset.o: $(IMAGES)
 
 $(PROGRAM): $(SOURCES)
 	$(CC) $(LDFLAGS) -o $@ $^
