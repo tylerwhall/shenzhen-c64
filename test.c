@@ -79,39 +79,44 @@ static void set_card_row_color(uint8_t color)
     card_draw_colorpos = &COLOR_RAM[offset]; \
 }
 
-static bool screenpos_oob(void)
-{
-    /* TODO: remove this check. Shouldn't be necessary if stack drawing is correct */
-    return (card_draw_screenpos >= &get_screen_mem()->mem[0] + (SCREENMEM_SIZE - 3));
-}
-
 static void draw_card_top(card_t card)
 {
-    if (screenpos_oob())
-        return;
-
     card_draw_screenpos[0] = CARD_IDX_TOP_LEFT(card_number(card));
     card_draw_screenpos[1] = CARD_IDX(TOP);
     card_draw_screenpos[2] = CARD_IDX(TOP);
     card_draw_screenpos[3] = CARD_IDX(TOP_RIGHT);
 }
 
+/* Draw the left, two middle spaces, and right */
 static void draw_card_middle(void)
 {
-    if (screenpos_oob())
-        return;
-
+#if 0
     card_draw_screenpos[0] = CARD_IDX(LEFT);
     card_draw_screenpos[1] = ' ';
     card_draw_screenpos[2] = ' ';
     card_draw_screenpos[3] = CARD_IDX(RIGHT);
+#else
+    __asm__ volatile ("ldy #0");
+    __asm__ volatile ("lda %v", card_draw_screenpos);
+    __asm__ volatile ("sta ptr1");
+    __asm__ volatile ("lda %v+1", card_draw_screenpos);
+    __asm__ volatile ("sta ptr1+1");
+
+    __asm__ volatile ("lda #<(_CARD_IDX_LEFT)   \n \
+                       sta (ptr1),y             \n \
+                       iny                      \n \
+                       lda #' '                 \n \
+                       sta (ptr1),y             \n \
+                       iny                      \n \
+                       sta (ptr1),y             \n \
+                       iny                      \n \
+                       lda #<(_CARD_IDX_RIGHT)  \n \
+                       sta (ptr1),y");
+#endif
 }
 
 static void draw_card_bottom(card_t card)
 {
-    if (screenpos_oob())
-        return;
-
     card_draw_screenpos[0] = CARD_IDX(BOTTOM_LEFT);
     card_draw_screenpos[1] = CARD_IDX(BOTTOM);
     card_draw_screenpos[2] = CARD_IDX(BOTTOM);
