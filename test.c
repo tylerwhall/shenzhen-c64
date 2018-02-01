@@ -8,9 +8,40 @@
 #include "screen.h"
 #include "charset.h"
 
+enum card_id {
+    CARD0 = 0,
+    CARD1 = 1,
+    CARD2 = 2,
+    CARD3 = 3,
+    CARD4 = 4,
+    CARD5 = 5,
+    CARD6 = 6,
+    CARD7 = 7,
+    CARD8 = 8,
+    CARD9 = 9,
+    CARD_DRAGON = 10,
+    CARD_FLOWER = 11,
+};
+
+enum suit {
+    RED = COLOR_RED,
+    GREEN = COLOR_GREEN,
+    BLACK = COLOR_BLACK,
+};
+
+typedef uint8_t card_t;
+
+#define card_number(card)       (card & 0xf)
+#define card_color(card)         (card >> 4)
+#define make_card(number, color) ((color << 4) | number)
+
 /* Cursor position */
 static uint16_t posx;
 static uint8_t posy;
+/* ID of card held by cursor. 0 if none */
+static uint8_t held_card;
+
+/* Card positions */
 
 #define CARD_WIDTH  4
 #define CARD_HEIGHT 7
@@ -21,21 +52,21 @@ static uint8_t posy;
 #define NUM_LOWER_STACKS    8
 #define UPPER_STACKS_Y      1
 
-static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
+static void draw_card(uint8_t x, uint8_t y, card_t card)
 {
     char *char_addr = &get_screen_mem()->mem[0];
     register uint16_t offset = x + y * 40;
     int i;
 
-    memset(&COLOR_RAM[offset], color, CARD_WIDTH);
-    char_addr[offset++] = CARD_IDX_TOP_LEFT(number);
+    memset(&COLOR_RAM[offset], card_color(card), CARD_WIDTH);
+    char_addr[offset++] = CARD_IDX_TOP_LEFT(card_number(card));
     char_addr[offset++] = CARD_IDX(TOP);
     char_addr[offset++] = CARD_IDX(TOP);
     char_addr[offset++] = CARD_IDX(TOP_RIGHT);
     offset += SCREEN_WIDTH - CARD_WIDTH;
 
     for (i = 0; i < CARD_HEIGHT - 2; i++) {
-        memset(&COLOR_RAM[offset], color, CARD_WIDTH);
+        memset(&COLOR_RAM[offset], card_color(card), CARD_WIDTH);
         char_addr[offset++] = CARD_IDX(LEFT);
         char_addr[offset++] = ' ';
         char_addr[offset++] = ' ';
@@ -43,11 +74,11 @@ static void card(uint8_t x, uint8_t y, uint8_t number, uint8_t color)
         offset += SCREEN_WIDTH - CARD_WIDTH;
     }
 
-    memset(&COLOR_RAM[offset], color, CARD_WIDTH);
+    memset(&COLOR_RAM[offset], card_color(card), CARD_WIDTH);
     char_addr[offset++] = CARD_IDX(BOTTOM_LEFT);
     char_addr[offset++] = CARD_IDX(BOTTOM);
     char_addr[offset++] = CARD_IDX(BOTTOM);
-    char_addr[offset++] = CARD_IDX_BOTTOM_RIGHT(number);
+    char_addr[offset++] = CARD_IDX_BOTTOM_RIGHT(card_number(card));
 }
 
 static void cards(void)
@@ -55,18 +86,18 @@ static void cards(void)
     int i;
 
 #define STEP (CARD_WIDTH + 1)
-    card(STEP * 5, UPPER_STACKS_Y, 7, COLOR_RED);
-    card(STEP * 6, UPPER_STACKS_Y, 7, COLOR_GREEN);
-    card(STEP * 7, UPPER_STACKS_Y, 7, COLOR_BLACK);
+    draw_card(STEP * 5, UPPER_STACKS_Y, make_card(7, COLOR_RED));
+    draw_card(STEP * 6, UPPER_STACKS_Y, make_card(7, COLOR_GREEN));
+    draw_card(STEP * 7, UPPER_STACKS_Y, make_card(7, COLOR_BLACK));
 
     for (i = 0; i < (NUM_LOWER_STACKS * STEP); i += STEP) {
-        card(i, LOWER_STACKS_Y, 7, COLOR_RED);
+        draw_card(i, LOWER_STACKS_Y, make_card(7, COLOR_RED));
     }
     for (i = 0; i < (NUM_LOWER_STACKS * STEP / 2); i += STEP) {
-        card(i, LOWER_STACKS_Y + 1, 6, COLOR_GREEN);
+        draw_card(i, LOWER_STACKS_Y + 1, make_card(6, COLOR_GREEN));
     }
     for (i = 0; i < (NUM_LOWER_STACKS * STEP / 4); i += STEP) {
-        card(i, LOWER_STACKS_Y + 2, 6, COLOR_BLACK);
+        draw_card(i, LOWER_STACKS_Y + 2, make_card(6, COLOR_BLACK));
     }
 #undef STEP
 }
@@ -115,7 +146,7 @@ static void cards(void)
 
 /* Debounced button state. */
 static bool button_state;
-static uint8_t button_state_frames;
+static uint8_t button_state_frames = 255;
 #define button_changed()    (button_state_frames == 2) /* 2 frame debounce interval */
 
 static void joy2_process(void)
@@ -138,9 +169,12 @@ static void joy2_process(void)
 
     if (button_changed()) {
         if (button_state) {
+            held_card = make_card(7, RED);
             show_card_sprites();
         } else {
             hide_card_sprites();
+            draw_card(posx / 8 - (SPRITE_XOFFSET / 8), posy / 8 - (SPRITE_YOFFSET / 8), held_card);
+            held_card = 0;
         }
     }
 
