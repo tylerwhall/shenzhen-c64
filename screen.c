@@ -40,12 +40,6 @@ void restore_screen_addr(void)
     VIC.addr = old_screenreg;
 }
 
-/*
- * Since we're copying the 2nd 64 characters, this macro allows specifying the
- * character value in the upper 64 with its real value.
- */
-#define char_offset(val) ((val) - 64)
-
 void init_screen(void)
 {
     char *addr = &get_screen_mem()->mem[0];
@@ -60,9 +54,9 @@ void init_screen(void)
     }
 #endif
     /* Checker pattern with BG color 2 */
-    memset(addr, (2 << 6) | char_offset(94), SCREEN_SIZE / 2);
+    memset(addr, BG_CHAR, SCREEN_SIZE / 2);
     memset(addr + SCREEN_SIZE / 2, (3 << 6) | char_offset(94), SCREEN_SIZE / 2);
-    memset(COLOR_RAM, COLOR_GREEN, SCREEN_SIZE);
+    memset(COLOR_RAM, BG_CHAR_COLOR, SCREEN_SIZE);
     /* Set Extended Background Color Mode */
     VIC.ctrl1 |= (1 << 6);
     VIC.bordercolor = COLOR_BLACK;

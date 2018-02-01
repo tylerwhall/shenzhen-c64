@@ -47,6 +47,10 @@ static uint8_t *card_draw_colorpos;
 
 /* Card positions */
 
+#define NUM_STACKS      8
+#define STACK_MAX_CARDS 10
+static card_t stacks[NUM_STACKS][STACK_MAX_CARDS];
+
 #define CARD_WIDTH  4
 #define CARD_HEIGHT 7
 #define CARD_WIDTH_PX   (CARD_WIDTH * 8)
@@ -56,14 +60,36 @@ static uint8_t *card_draw_colorpos;
 #define NUM_LOWER_STACKS    8
 #define UPPER_STACKS_Y      1
 
+#define STACK_MAX_ROWS  (SCREEN_HEIGHT - LOWER_STACKS_Y)
+
 /* Fill one row of a card's color memory */
 static void set_card_row_color(uint8_t color)
 {
     memset(card_draw_colorpos, color, CARD_WIDTH);
 }
 
+#define card_draw_line_advance() { \
+    card_draw_screenpos += SCREEN_WIDTH; \
+    card_draw_colorpos += SCREEN_WIDTH; \
+}
+
+#define card_draw_set_offset(x, y) { \
+    uint16_t offset = x + y * 40; \
+    card_draw_screenpos = &get_screen_mem()->mem[offset]; \
+    card_draw_colorpos = &COLOR_RAM[offset]; \
+}
+
+static bool screenpos_oob(void)
+{
+    /* TODO: remove this check. Shouldn't be necessary if stack drawing is correct */
+    return (card_draw_screenpos >= &get_screen_mem()->mem[0] + (SCREENMEM_SIZE - 3));
+}
+
 static void draw_card_top(card_t card)
 {
+    if (screenpos_oob())
+        return;
+
     card_draw_screenpos[0] = CARD_IDX_TOP_LEFT(card_number(card));
     card_draw_screenpos[1] = CARD_IDX(TOP);
     card_draw_screenpos[2] = CARD_IDX(TOP);
@@ -72,6 +98,9 @@ static void draw_card_top(card_t card)
 
 static void draw_card_middle(void)
 {
+    if (screenpos_oob())
+        return;
+
     card_draw_screenpos[0] = CARD_IDX(LEFT);
     card_draw_screenpos[1] = ' ';
     card_draw_screenpos[2] = ' ';
@@ -80,66 +109,86 @@ static void draw_card_middle(void)
 
 static void draw_card_bottom(card_t card)
 {
+    if (screenpos_oob())
+        return;
+
     card_draw_screenpos[0] = CARD_IDX(BOTTOM_LEFT);
     card_draw_screenpos[1] = CARD_IDX(BOTTOM);
     card_draw_screenpos[2] = CARD_IDX(BOTTOM);
     card_draw_screenpos[3] = CARD_IDX_BOTTOM_RIGHT(card_number(card));
 }
 
-#define screenpos_oob() (card_draw_screenpos >= &get_screen_mem()->mem[0] + (SCREENMEM_SIZE - 3))
 static void draw_card(uint8_t x, uint8_t y, card_t card)
 {
     char *char_addr = &get_screen_mem()->mem[0];
-    register uint16_t offset = x + y * 40;
     int i;
 
-    card_draw_screenpos = &get_screen_mem()->mem[offset];
-    card_draw_colorpos = &COLOR_RAM[offset];
-
-    if (screenpos_oob())
-        return;
+    card_draw_set_offset(x, y);
 
     draw_card_top(card);
     set_card_row_color(card_color(card));
-    card_draw_screenpos += SCREEN_WIDTH;
-    card_draw_colorpos += SCREEN_WIDTH;
+    card_draw_line_advance();
 
 
     for (i = 0; i < CARD_HEIGHT - 2; i++) {
-        if (screenpos_oob())
-            return;
         draw_card_middle();
         set_card_row_color(card_color(card));
-        card_draw_screenpos += SCREEN_WIDTH;
-        card_draw_colorpos += SCREEN_WIDTH;
+        card_draw_line_advance();
     }
-
-    if (screenpos_oob())
-        return;
 
     draw_card_bottom(card);
     set_card_row_color(card_color(card));
+}
+
+static void draw_stack(uint8_t stack)
+{
+    uint8_t row;
+    card_t body = 0;
+    uint8_t body_count;
+
+    card_draw_set_offset(stack * (CARD_WIDTH + 1), LOWER_STACKS_Y);
+
+    for (row = 0; row < STACK_MAX_ROWS; row++) {
+        card_t card = row < STACK_MAX_CARDS ? stacks[stack][row] : 0;
+
+        if (card) {
+            draw_card_top(card);
+            set_card_row_color(card_color(card));
+            body = card;
+            body_count = 0;
+        } else if (body) {
+            set_card_row_color(card_color(body));
+            if (body_count < CARD_HEIGHT - 2) {
+                draw_card_middle();
+                body_count++;
+            } else {
+                draw_card_bottom(body);
+                body = 0;
+            }
+        } else {
+            // Background
+            set_card_row_color(COLOR_GREEN);
+        }
+
+        card_draw_line_advance();
+    }
 }
 
 static void cards(void)
 {
     int i;
 
-#define STEP (CARD_WIDTH + 1)
-    draw_card(STEP * 5, UPPER_STACKS_Y, make_card(7, COLOR_RED));
-    draw_card(STEP * 6, UPPER_STACKS_Y, make_card(7, COLOR_GREEN));
-    draw_card(STEP * 7, UPPER_STACKS_Y, make_card(7, COLOR_BLACK));
-
-    for (i = 0; i < (NUM_LOWER_STACKS * STEP); i += STEP) {
-        draw_card(i, LOWER_STACKS_Y, make_card(7, COLOR_RED));
+    stacks[0][0] = make_card(1, RED);
+    stacks[0][1] = make_card(8, GREEN);
+    stacks[0][2] = make_card(9, BLACK);
+    stacks[0][3] = make_card(5, BLACK);
+    stacks[0][4] = make_card(3, RED);
+    stacks[0][5] = make_card(4, RED);
+    stacks[3][0] = make_card(4, BLACK);
+    stacks[4][0] = make_card(0, GREEN);
+    for (i = 0; i < NUM_STACKS; i++) {
+        draw_stack(i);
     }
-    for (i = 0; i < (NUM_LOWER_STACKS * STEP / 2); i += STEP) {
-        draw_card(i, LOWER_STACKS_Y + 1, make_card(6, COLOR_GREEN));
-    }
-    for (i = 0; i < (NUM_LOWER_STACKS * STEP / 4); i += STEP) {
-        draw_card(i, LOWER_STACKS_Y + 2, make_card(6, COLOR_BLACK));
-    }
-#undef STEP
 }
 
 #define RASTER_MIN      51
@@ -207,6 +256,7 @@ static void joy2_process(void)
     }
     button_state = cur_button_state;
 
+    draw_stack(0);
     if (button_changed()) {
         if (button_state) {
             held_card = make_card(7, RED);
