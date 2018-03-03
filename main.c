@@ -154,11 +154,12 @@ static void draw_stack(uint8_t stack)
     uint8_t row;
     card_t body = 0;
     uint8_t body_count;
+    card_t *stack_cards = stacks[stack];
 
     card_draw_set_offset(stack * (CARD_WIDTH + 1), LOWER_STACKS_Y);
 
     for (row = 0; row < STACK_MAX_ROWS; row++) {
-        card_t card = row < STACK_MAX_CARDS ? stacks[stack][row] : 0;
+        card_t card = row < STACK_MAX_CARDS ? stack_cards[row] : 0;
 
         if (card) {
             draw_card_top(card);
