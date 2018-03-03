@@ -98,32 +98,18 @@ extern void fastcall asm_draw_card_top(card_t card);
 #endif
 
 /* Draw the left, two middle spaces, and right */
+#if 0
 static void draw_card_middle(void)
 {
-#if 0
     card_draw_screenpos[0] = CARD_IDX(LEFT);
     card_draw_screenpos[1] = ' ';
     card_draw_screenpos[2] = ' ';
     card_draw_screenpos[3] = CARD_IDX(RIGHT);
-#else
-    __asm__ volatile ("ldy #0");
-    __asm__ volatile ("lda %v", card_draw_screenpos);
-    __asm__ volatile ("sta ptr1");
-    __asm__ volatile ("lda %v+1", card_draw_screenpos);
-    __asm__ volatile ("sta ptr1+1");
-
-    __asm__ volatile ("lda #<(_CARD_IDX_LEFT)   \n \
-                       sta (ptr1),y             \n \
-                       iny                      \n \
-                       lda #' '                 \n \
-                       sta (ptr1),y             \n \
-                       iny                      \n \
-                       sta (ptr1),y             \n \
-                       iny                      \n \
-                       lda #<(_CARD_IDX_RIGHT)  \n \
-                       sta (ptr1),y");
-#endif
 }
+#else
+extern void fastcall asm_draw_card_middle(void);
+#define draw_card_middle() asm_draw_card_middle()
+#endif
 
 #if 0
 static void draw_card_bottom(card_t card)

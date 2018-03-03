@@ -66,3 +66,24 @@ _asm_draw_card_bottom:
     txa
     sta (ptr1),y
     rts
+
+    .import _CARD_IDX_LEFT, _CARD_IDX_RIGHT
+    .export _asm_draw_card_middle
+_asm_draw_card_middle:
+    ldx _card_draw_screenpos
+    stx ptr1
+    ldx _card_draw_screenpos+1
+    stx ptr1+1
+
+    ldy #0
+    lda #<(_CARD_IDX_LEFT)
+    sta (ptr1),y
+    iny
+    lda #' '
+    sta (ptr1),y
+    iny
+    sta (ptr1),y
+    iny
+    lda #<(_CARD_IDX_RIGHT)
+    sta (ptr1),y
+    rts
