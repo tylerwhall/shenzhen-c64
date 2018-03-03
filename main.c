@@ -75,9 +75,10 @@ extern void fastcall asm_set_card_row_color(uint8_t color);
 #define set_card_row_color(color) asm_set_card_row_color(color)
 #endif
 
-#define card_draw_line_advance() { \
-    card_draw_screenpos += SCREEN_WIDTH; \
-    card_draw_colorpos += SCREEN_WIDTH; \
+static void card_draw_line_advance(void)
+{
+    card_draw_screenpos += SCREEN_WIDTH;
+    card_draw_colorpos += SCREEN_WIDTH;
 }
 
 #define card_draw_set_offset(x, y) { \
