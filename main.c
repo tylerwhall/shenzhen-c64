@@ -151,23 +151,27 @@ static void draw_card(uint8_t x, uint8_t y, card_t card)
 
 static void draw_stack(uint8_t stack)
 {
-    uint8_t row;
-    card_t body = 0;
-    uint8_t body_count;
-    card_t *stack_cards = stacks[stack];
+    register uint8_t row;
+    register card_t *stack_cards;
+    register card_t card;
+    register uint8_t color;
+    register uint8_t body = 0;
+    static uint8_t body_count; // Not reentrant
 
+    stack_cards = stacks[stack];
     card_draw_set_offset(stack * (CARD_WIDTH + 1), LOWER_STACKS_Y);
 
     for (row = 0; row < STACK_MAX_ROWS; row++) {
-        card_t card = row < STACK_MAX_CARDS ? stack_cards[row] : 0;
+        card = row < STACK_MAX_CARDS ? stack_cards[row] : 0;
 
         if (card) {
             draw_card_top(card);
-            set_card_row_color(card_color(card));
+            color = card_color(card);
+            set_card_row_color(color);
             body = card;
             body_count = 0;
         } else if (body) {
-            set_card_row_color(card_color(body));
+            set_card_row_color(color);
             if (body_count < CARD_HEIGHT - 2) {
                 draw_card_middle();
                 body_count++;
