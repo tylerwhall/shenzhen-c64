@@ -53,9 +53,7 @@ void init_screen(void)
         }
     }
 #endif
-    /* Checker pattern with BG color 2 */
-    memset(addr, BG_CHAR, SCREEN_SIZE / 2);
-    memset(addr + SCREEN_SIZE / 2, (3 << 6) | char_offset(94), SCREEN_SIZE / 2);
+    memset(addr, BG_CHAR, SCREEN_SIZE);
     memset(COLOR_RAM, BG_CHAR_COLOR, SCREEN_SIZE);
     /* Set Extended Background Color Mode */
     VIC.ctrl1 |= (1 << 6);
