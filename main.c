@@ -8,6 +8,8 @@
 #include "screen.h"
 #include "charset.h"
 
+#define USE_ASM 1
+
 enum card_id {
     CARD0 = 0,
     CARD1 = 1,
@@ -63,7 +65,7 @@ static card_t stacks[NUM_STACKS][STACK_MAX_CARDS];
 #define STACK_MAX_ROWS  (SCREEN_HEIGHT - LOWER_STACKS_Y)
 
 /* Fill one row of a card's color memory */
-#if 0
+#if !USE_ASM
 static void fastcall set_card_row_color(uint8_t color)
 {
     memset(card_draw_colorpos, color, CARD_WIDTH);
@@ -84,7 +86,7 @@ extern void fastcall asm_set_card_row_color(uint8_t color);
     card_draw_colorpos = &COLOR_RAM[offset]; \
 }
 
-#if 0
+#if !USE_ASM
 static void draw_card_top(card_t card)
 {
     card_draw_screenpos[0] = CARD_IDX_TOP_LEFT(card_number(card));
@@ -98,7 +100,7 @@ extern void fastcall asm_draw_card_top(card_t card);
 #endif
 
 /* Draw the left, two middle spaces, and right */
-#if 0
+#if !USE_ASM
 static void draw_card_middle(void)
 {
     card_draw_screenpos[0] = CARD_IDX(LEFT);
@@ -111,7 +113,7 @@ extern void fastcall asm_draw_card_middle(void);
 #define draw_card_middle() asm_draw_card_middle()
 #endif
 
-#if 0
+#if !USE_ASM
 static void draw_card_bottom(card_t card)
 {
     card_draw_screenpos[0] = CARD_IDX(BOTTOM_LEFT);
@@ -262,7 +264,11 @@ static void joy2_process(void)
     }
     button_state = cur_button_state;
 
+    /* Temporary performance test */
+    VIC.bordercolor = COLOR_BLUE;
     draw_stack(0);
+    VIC.bordercolor = COLOR_RED;
+
     if (button_changed()) {
         if (button_state) {
             held_card = make_card(7, RED);
