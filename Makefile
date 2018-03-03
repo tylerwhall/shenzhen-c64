@@ -2,8 +2,8 @@ export CC65_HOME = /usr/share/cc65
 CC65_TARGET = c64
 
 
-SOURCES = test.o screen.o charset.o card.o
-PROGRAM = test
+SOURCES = main.o screen.o charset.o card.o
+PROGRAM = shenzhen
 
 ifdef CC65_TARGET
 CC      = cl65
@@ -45,4 +45,4 @@ dis: $(PROGRAM)
 	da65 $(PROGRAM)
 
 run: $(PROGRAM)
-	x64 -moncommands cmds.txt -controlport2device 1 -joydev2 1 test
+	x64 -moncommands cmds.txt -controlport2device 1 -joydev2 1 $(PROGRAM)
