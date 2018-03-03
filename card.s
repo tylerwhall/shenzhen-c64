@@ -27,9 +27,7 @@ _asm_draw_card_top:
 
     and #$0f
     clc
-    adc #<(_CARD_IDX_TOP_LEFT)
-    sbc #0 ; Subtract 1. (Carry is clear.)
-    ;adc #$ff also works
+    adc #<(_CARD_IDX_TOP_LEFT) - 1 ; Card showing 1 is at index 0, so subtract 1
 
     ldy #0
     sta (ptr1),y
@@ -53,9 +51,7 @@ _asm_draw_card_bottom:
 
     and #$0f
     clc
-    adc #<(_CARD_IDX_BOTTOM_RIGHT)
-    sbc #0 ; Subtract 1. (Carry is clear.)
-    ;adc #$ff also works
+    adc #<(_CARD_IDX_BOTTOM_RIGHT) - 1; Card showing 1 is at index 0, so subtract 1
     tax
 
     ldy #0
